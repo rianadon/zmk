@@ -1,0 +1,9 @@
+file_format: "1"
+id: cosmos_lemon_wireless
+name: Cosmos Lemon Wireless
+type: board
+arch: arm
+outputs:
+  - usb
+  - ble
+url: https://ryanis.cool/cosmos/lemon

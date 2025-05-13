@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: MIT
+
+if BOARD_COSMOS_LEMON_WIRELESS
+
+config BOARD
+    default "cosmos_lemon_wireless"
+
+if USB_DEVICE_STACK
+
+config USB_NRFX
+    default y
+
+endif # USB_DEVICE_STACK
+
+config BT_CTLR
+    default BT
+
+endif # BOARD_COSMOS_LEMON_WIRELESS
