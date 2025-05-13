@@ -23,6 +23,11 @@ on:
         default: "firmware"
         required: false
         type: string
+      preparation_command:
+        description: "Command to execute before building"
+        default: ""
+        required: false
+        type: string
 
 jobs:
   matrix:
@@ -54,6 +59,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Preparation command
+        if: inputs.preparation_command != ''
+        run: |
+          ${{ inputs.preparation_command }}
 
       - name: Create build directory
         run: |
