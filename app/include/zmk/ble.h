@@ -29,7 +29,6 @@ int zmk_ble_prof_disconnect(uint8_t index);
 int zmk_ble_active_profile_index(void);
 int zmk_ble_profile_index(const bt_addr_le_t *addr);
 
-<<<<<<< HEAD
 bt_addr_le_t *zmk_ble_active_profile_addr(void);
 struct bt_conn *zmk_ble_active_profile_conn(void);
 
@@ -37,12 +36,9 @@ bool zmk_ble_active_profile_is_open(void);
 bool zmk_ble_active_profile_is_connected(void);
 char *zmk_ble_active_profile_name(void);
 
-int zmk_ble_unpair_all(void);
+void zmk_ble_unpair_all(void);
 
 int zmk_ble_set_device_name(char *name);
-=======
-void zmk_ble_unpair_all(void);
->>>>>>> c072f755 (refactor: Add a settings reset function)
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 int zmk_ble_put_peripheral_addr(const bt_addr_le_t *addr);
