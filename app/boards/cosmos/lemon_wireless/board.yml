@@ -1,0 +1,5 @@
+board:
+  name: lemon_wireless
+  vendor: cosmos
+  socs:
+    - name: nrf52840
