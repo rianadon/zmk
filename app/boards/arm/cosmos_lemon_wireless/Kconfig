@@ -4,10 +4,10 @@ config BOARD_ENABLE_DCDC
     bool "Enable DCDC mode"
     select SOC_DCDC_NRF52X
     default y
-    depends on (BOARD_COSMOS_LEMON_WIRELESS)
+    depends on (BOARD_COSMOS_LEMON_WIRELESS || BOARD_COSMOS_LEMON_WIRELESS_V4)
 
 config BOARD_ENABLE_DCDC_HV
     bool "High voltage DCDC converter"
     select SOC_DCDC_NRF52X_HV
     default y
-    depends on (BOARD_COSMOS_LEMON_WIRELESS)
+    depends on (BOARD_COSMOS_LEMON_WIRELESS || BOARD_COSMOS_LEMON_WIRELESS_V4)
