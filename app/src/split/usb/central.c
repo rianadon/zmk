@@ -349,10 +349,8 @@ static void bring_up(void)
 {
 	int ret;
 
-	printk("zsuc: bring_up start\n");
-	printk("zsuc: bus reset...\n");
+	LOG_INF("bring-up start");
 	ret = uhc_bus_reset(uhc_dev);
-	printk("zsuc: bus reset returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("bus_reset failed: %d", ret);
 		return;
@@ -360,27 +358,25 @@ static void bring_up(void)
 	/* USB §9.2.6.3: at least 10ms after reset before talking. */
 	k_msleep(50);
 
-	/* GET_DESCRIPTOR(DEVICE) at addr=0 first — proves the wire is live
-	 * before we attempt to address the device. Diagnostic only. */
+	/* GET_DESCRIPTOR(DEVICE) at addr=0 — read the peripheral's
+	 * identity before we address it. Catches a dead-bus condition
+	 * before SET_ADDRESS would silently time out, and lets us
+	 * confirm the right firmware is on the other end of the link. */
 	struct net_buf *desc_buf = net_buf_alloc(&xfer_pool, K_NO_WAIT);
-	if (desc_buf == NULL) {
-		printk("zsuc: GET_DESCRIPTOR alloc failed\n");
-	} else {
-		printk("zsuc: GET_DESCRIPTOR(DEVICE, 18) at addr=0...\n");
+	if (desc_buf != NULL) {
 		ret = get_descriptor(0x01, 0, 18, desc_buf);
-		printk("zsuc: GET_DESCRIPTOR returned %d (len=%u)\n", ret,
-		       desc_buf->len);
 		if (ret == 0 && desc_buf->len >= 18) {
 			const uint8_t *d = desc_buf->data;
-			printk("zsuc: desc idVendor=0x%02x%02x idProduct=0x%02x%02x bcdDev=0x%02x%02x\n",
-			       d[9], d[8], d[11], d[10], d[13], d[12]);
+			LOG_INF("peripheral VID=0x%02x%02x PID=0x%02x%02x bcdDevice=0x%02x%02x",
+				d[9], d[8], d[11], d[10], d[13], d[12]);
+		} else {
+			LOG_WRN("GET_DESCRIPTOR(DEVICE) failed: %d (len=%u)",
+				ret, desc_buf->len);
 		}
 		net_buf_unref(desc_buf);
 	}
 
-	printk("zsuc: SET_ADDRESS %u...\n", PERIPHERAL_DEV_ADDR);
 	ret = set_address(PERIPHERAL_DEV_ADDR);
-	printk("zsuc: SET_ADDRESS returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("SET_ADDRESS failed: %d", ret);
 		return;
@@ -388,18 +384,15 @@ static void bring_up(void)
 	atomic_set(&enumerated, 1);
 	k_msleep(2);
 
-	printk("zsuc: SET_CONFIGURATION 1 at addr=%u...\n",
-	       PERIPHERAL_DEV_ADDR);
 	ret = set_configuration(1);
-	printk("zsuc: SET_CONFIGURATION returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("SET_CONFIGURATION failed: %d", ret);
 		return;
 	}
 
-	printk("zsuc: arming bulk-IN read\n");
 	(void)arm_bulk_in();
-	printk("zsuc: bring_up done\n");
+	LOG_INF("bring-up done — peripheral at addr=%u, bulk-IN armed",
+		PERIPHERAL_DEV_ADDR);
 }
 
 static void wait_for_console(void)
@@ -411,7 +404,6 @@ static void wait_for_console(void)
 	}
 	uint32_t dtr = 0;
 	for (int i = 0; i < 30; i++) {
-		printk("zsuc wfc i=%d dtr=%u\n", i, dtr);
 		uart_line_ctrl_get(console, UART_LINE_CTRL_DTR, &dtr);
 		if (dtr) {
 			break;
@@ -430,34 +422,26 @@ static void central_thread(void *p1, void *p2, void *p3)
 	int ret;
 
 	wait_for_console();
-	printk("\n*** zmk_split_usb_central thread up ***\n");
 
 	k_sem_init(&connect_sem, 0, 1);
 	k_sem_init(&xfer_done, 0, 1);
 
-	printk("zsuc: device_is_ready check\n");
 	if (!device_is_ready(uhc_dev)) {
-		printk("zsuc: UHC not ready\n");
 		LOG_ERR("UHC %s not ready", uhc_dev->name);
 		return;
 	}
 
-	printk("zsuc: calling uhc_init\n");
 	ret = uhc_init(uhc_dev, uhc_event);
-	printk("zsuc: uhc_init returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("uhc_init failed: %d", ret);
 		return;
 	}
 
-	printk("zsuc: calling uhc_enable\n");
 	ret = uhc_enable(uhc_dev);
-	printk("zsuc: uhc_enable returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("uhc_enable failed: %d", ret);
 		return;
 	}
-	printk("zsuc: USB split central up; waiting for peripheral\n");
 	LOG_INF("USB split central up; waiting for peripheral");
 
 	while (1) {
