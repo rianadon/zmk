@@ -4,6 +4,10 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
+    - name: sekigon-gonnoc
+      url-base: https://github.com/sekigon-gonnoc
+    - name: Olson3R
+      url-base: https://github.com/Olson3R
   projects:
     - name: zephyr
       remote: zmkfirmware
@@ -37,5 +41,19 @@ manifest:
       revision: 6cb4c283e76209d59c45fbcb218800cd19e9339d
       path: modules/msgs/zmk-studio-messages
       remote: zmkfirmware
+    # Pico-PIO-USB upstream (sekigon-gonnoc/Pico-PIO-USB) — bit-banged USB
+    # PHY+controller for RP2040. Phase 2 of the Lemon Wired ZMK roadmap
+    # uses it as the inter-half link on the second USB-C port.
+    - name: Pico-PIO-USB
+      remote: sekigon-gonnoc
+      revision: 3c1eec341a5232640e4c00628b889b641af34b28  # 0.7.2
+      path: modules/lib/pico-pio-usb
+    # Zephyr glue exposing Pico-PIO-USB as UHC + UDC drivers. The drivers
+    # in this module are Phase 2 scaffolds (return -ENOSYS) until the
+    # follow-up shim PRs land; nothing references them today.
+    - name: zephyr-module-pio-usb
+      remote: Olson3R
+      revision: phase-2-scaffold
+      path: modules/lib/zephyr-pio-usb
   self:
     west-commands: scripts/west-commands.yml
