@@ -46,7 +46,14 @@ manifest:
     # uses it as the inter-half link on the second USB-C port.
     - name: Pico-PIO-USB
       remote: sekigon-gonnoc
-      revision: 3c1eec341a5232640e4c00628b889b641af34b28  # 0.7.2
+      # Post-0.7.2 main: includes 38ed543 "optimize to reduce delay
+      # between received DATA and sending handshake" — inlines
+      # pio_usb_bus_send_handshake and caches PIO/SM/rx_buffer in
+      # locals to tighten the DATA→ACK turnaround. Without this, our
+      # IN STATUS for SET_ADDRESS appears to ACK on the host side but
+      # the device misses our ACK (timing-critical, must arrive within
+      # 6.5–7.5 bit-times of EOP) and never commits the new address.
+      revision: 675543bcc9baa8170f868ab7ba316d418dbcf41f  # main @ post-0.7.2
       path: modules/lib/pico-pio-usb
     # Zephyr glue exposing Pico-PIO-USB as UHC + UDC drivers. The drivers
     # in this module are Phase 2 scaffolds (return -ENOSYS) until the
