@@ -55,12 +55,13 @@ manifest:
       # 6.5–7.5 bit-times of EOP) and never commits the new address.
       revision: 675543bcc9baa8170f868ab7ba316d418dbcf41f  # main @ post-0.7.2
       path: modules/lib/pico-pio-usb
-    # Zephyr glue exposing Pico-PIO-USB as UHC + UDC drivers. The drivers
-    # in this module are Phase 2 scaffolds (return -ENOSYS) until the
-    # follow-up shim PRs land; nothing references them today.
+    # Zephyr glue exposing Pico-PIO-USB as UHC + UDC drivers.
+    # Pinned at the cleanup of the B4 working state (single-xfer
+    # control transfers + per-tick xfer pumping + STATUS direction
+    # fix); see the phase-2-samples branch for context.
     - name: zephyr-module-pio-usb
       remote: Olson3R
-      revision: phase-2-scaffold
+      revision: 304cc1e1655b634a05797f8e4a433c40f9e7504d
       path: modules/lib/zephyr-pio-usb
   self:
     west-commands: scripts/west-commands.yml
