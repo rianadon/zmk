@@ -1,0 +1,29 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if SHIELD_COSMOS_LEMON_WIRED_LEFT
+
+config ZMK_KEYBOARD_NAME
+    default "Lemon Wired"
+
+config ZMK_SPLIT_ROLE_CENTRAL
+    default y
+
+config ZMK_SPLIT_USB
+    default y
+
+endif # SHIELD_COSMOS_LEMON_WIRED_LEFT
+
+if SHIELD_COSMOS_LEMON_WIRED_RIGHT
+
+config ZMK_SPLIT_USB
+    default y
+
+endif # SHIELD_COSMOS_LEMON_WIRED_RIGHT
+
+if SHIELD_COSMOS_LEMON_WIRED_LEFT || SHIELD_COSMOS_LEMON_WIRED_RIGHT
+
+config ZMK_SPLIT
+    default y
+
+endif # SHIELD_COSMOS_LEMON_WIRED_LEFT || SHIELD_COSMOS_LEMON_WIRED_RIGHT
