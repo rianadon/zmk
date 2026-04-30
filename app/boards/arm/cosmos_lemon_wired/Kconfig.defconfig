@@ -5,6 +5,13 @@ if BOARD_COSMOS_LEMON_WIRED
 config BOARD
 	default "cosmos_lemon_wired"
 
+# Lemon Wired ships a W25Q-series 8MB flash. The `_W25Q080` selector here
+# is named after the smaller 1MB W25Q080 but picks the same second-stage
+# bootloader binary (W25Q-family); flash size is set independently in the
+# DTS partition layout (DT_SIZE_M(8)).
+config RP2_FLASH_W25Q080
+	default y
+
 config USB_SELF_POWERED
 	default n
 
