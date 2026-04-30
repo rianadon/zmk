@@ -61,11 +61,7 @@ LOG_MODULE_REGISTER(zmk_split_usb_central, CONFIG_ZMK_SPLIT_USB_LOG_LEVEL);
 #define UHC_PHANDLE DT_INST_PHANDLE(0, uhc)
 static const struct device *const uhc_dev = DEVICE_DT_GET(UHC_PHANDLE);
 
-/* TEMP: leave the peripheral at default addr=0 — pico-pio-usb's STATUS
- * IN appears not to drive the device's SET_ADDRESS commit, so a SET_ADDRESS
- * succeeds on our side but the device stays at 0. For a single-peripheral
- * split bus this is a fine workaround. */
-#define PERIPHERAL_DEV_ADDR 0
+#define PERIPHERAL_DEV_ADDR 1
 #define MPS                 64
 
 static atomic_t connected;
@@ -125,75 +121,39 @@ static int uhc_event(const struct device *dev, const struct uhc_event *const evt
 
 /* ===== Helpers ======================================================== */
 
-static int run_xfer_stage(struct uhc_transfer *xfer, const char *label)
-{
-	int ret = uhc_ep_enqueue(uhc_dev, xfer);
-	if (ret) {
-		LOG_ERR("%s enqueue failed: %d", label, ret);
-		return ret;
-	}
-	if (k_sem_take(&xfer_done,
-		       K_MSEC(CONFIG_ZMK_SPLIT_USB_TRANSFER_TIMEOUT_MS))) {
-		LOG_WRN("%s timed out", label);
-		(void)uhc_ep_dequeue(uhc_dev, xfer);
-		return -ETIMEDOUT;
-	}
-	return xfer->err;
-}
-
+/* Issue a control request as a single uhc_transfer. The driver advances
+ * SETUP→DATA→STATUS internally and only signals completion at the end —
+ * matching the in-tree max3421e UHC driver pattern. xfer->ep encodes the
+ * DATA direction; STATUS direction is implied as the opposite. */
 static int issue_setup(const struct usb_setup_packet *setup,
 		       struct net_buf *data_buf)
 {
 	uint8_t addr = atomic_get(&enumerated) ? PERIPHERAL_DEV_ADDR : 0;
 	bool data_in = setup->RequestType.direction == USB_REQTYPE_DIR_TO_HOST;
 
-	struct uhc_transfer setup_xfer = {
+	struct uhc_transfer xfer = {
 		.addr = addr,
-		.ep = USB_CONTROL_EP_OUT,
+		.ep = data_in ? USB_CONTROL_EP_IN : USB_CONTROL_EP_OUT,
 		.attrib = USB_EP_TYPE_CONTROL,
 		.mps = MPS,
 		.timeout = 1000,
 		.buf = data_buf,
 		.stage = UHC_CONTROL_STAGE_SETUP,
 	};
-	memcpy(setup_xfer.setup_pkt, setup, sizeof(setup_xfer.setup_pkt));
-	int ret = run_xfer_stage(&setup_xfer, "setup");
+	memcpy(xfer.setup_pkt, setup, sizeof(xfer.setup_pkt));
+
+	int ret = uhc_ep_enqueue(uhc_dev, &xfer);
 	if (ret) {
+		LOG_ERR("setup enqueue failed: %d", ret);
 		return ret;
 	}
-
-	/* DATA stage (only when the request actually carries data). */
-	if (data_buf != NULL && setup->wLength != 0) {
-		struct uhc_transfer data_xfer = {
-			.addr = addr,
-			.ep = data_in ? USB_CONTROL_EP_IN : USB_CONTROL_EP_OUT,
-			.attrib = USB_EP_TYPE_CONTROL,
-			.mps = MPS,
-			.timeout = 1000,
-			.buf = data_buf,
-			.stage = UHC_CONTROL_STAGE_DATA,
-		};
-		ret = run_xfer_stage(&data_xfer, "data");
-		if (ret) {
-			return ret;
-		}
+	if (k_sem_take(&xfer_done,
+		       K_MSEC(CONFIG_ZMK_SPLIT_USB_TRANSFER_TIMEOUT_MS))) {
+		LOG_WRN("setup timed out");
+		(void)uhc_ep_dequeue(uhc_dev, &xfer);
+		return -ETIMEDOUT;
 	}
-
-	/* STATUS stage — opposite direction of DATA. For no-data
-	 * control writes (SET_ADDRESS, SET_CONFIGURATION, ...), STATUS
-	 * is an IN ZLP. Without it, the device never commits the
-	 * request, and follow-up transactions on the new address fail
-	 * with -EIO. */
-	struct uhc_transfer status_xfer = {
-		.addr = addr,
-		.ep = data_in ? USB_CONTROL_EP_OUT : USB_CONTROL_EP_IN,
-		.attrib = USB_EP_TYPE_CONTROL,
-		.mps = MPS,
-		.timeout = 1000,
-		.buf = NULL,
-		.stage = UHC_CONTROL_STAGE_STATUS,
-	};
-	return run_xfer_stage(&status_xfer, "status");
+	return xfer.err;
 }
 
 static int set_address(uint8_t addr)
@@ -400,13 +360,8 @@ static void bring_up(void)
 	/* USB §9.2.6.3: at least 10ms after reset before talking. */
 	k_msleep(50);
 
-	/* TEMP: skip SET_ADDRESS — talk to peripheral at default addr=0.
-	 * USB allows this for any single-device bus. Diagnostic to confirm
-	 * whether SET_ADDRESS is the specific failure point or there's
-	 * something deeper wrong with pico-pio-usb's IN transactions. */
-	printk("zsuc: skipping SET_ADDRESS (diagnostic)\n");
-
-	/* GET_DESCRIPTOR(DEVICE) — exercises SETUP + DATA-IN + STATUS-OUT. */
+	/* GET_DESCRIPTOR(DEVICE) at addr=0 first — proves the wire is live
+	 * before we attempt to address the device. Diagnostic only. */
 	struct net_buf *desc_buf = net_buf_alloc(&xfer_pool, K_NO_WAIT);
 	if (desc_buf == NULL) {
 		printk("zsuc: GET_DESCRIPTOR alloc failed\n");
@@ -415,19 +370,26 @@ static void bring_up(void)
 		ret = get_descriptor(0x01, 0, 18, desc_buf);
 		printk("zsuc: GET_DESCRIPTOR returned %d (len=%u)\n", ret,
 		       desc_buf->len);
-		if (ret == 0 && desc_buf->len >= 8) {
+		if (ret == 0 && desc_buf->len >= 18) {
 			const uint8_t *d = desc_buf->data;
-			printk("zsuc: desc bLength=%u bDescType=0x%02x bcdUSB=0x%02x%02x bDevClass=0x%02x bMaxPS0=%u\n",
-			       d[0], d[1], d[3], d[2], d[4], d[7]);
-			if (desc_buf->len >= 18) {
-				printk("zsuc: desc idVendor=0x%02x%02x idProduct=0x%02x%02x bcdDev=0x%02x%02x\n",
-				       d[9], d[8], d[11], d[10], d[13], d[12]);
-			}
+			printk("zsuc: desc idVendor=0x%02x%02x idProduct=0x%02x%02x bcdDev=0x%02x%02x\n",
+			       d[9], d[8], d[11], d[10], d[13], d[12]);
 		}
 		net_buf_unref(desc_buf);
 	}
 
-	printk("zsuc: SET_CONFIGURATION 1 at addr=0...\n");
+	printk("zsuc: SET_ADDRESS %u...\n", PERIPHERAL_DEV_ADDR);
+	ret = set_address(PERIPHERAL_DEV_ADDR);
+	printk("zsuc: SET_ADDRESS returned %d\n", ret);
+	if (ret) {
+		LOG_ERR("SET_ADDRESS failed: %d", ret);
+		return;
+	}
+	atomic_set(&enumerated, 1);
+	k_msleep(2);
+
+	printk("zsuc: SET_CONFIGURATION 1 at addr=%u...\n",
+	       PERIPHERAL_DEV_ADDR);
 	ret = set_configuration(1);
 	printk("zsuc: SET_CONFIGURATION returned %d\n", ret);
 	if (ret) {
