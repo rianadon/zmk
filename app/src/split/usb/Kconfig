@@ -1,0 +1,38 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if ZMK_SPLIT_USB
+
+config ZMK_SPLIT_USB_CMD_BUFFER_ITEMS
+	int "Number of central commands to queue toward the peripheral"
+	default 4
+	help
+	  Each in-flight command consumes ZMK_SPLIT_USB_CMD_PACKET_SIZE bytes
+	  of static buffer plus a UHC transfer slot. The peripheral processes
+	  them in order; this knob bounds the burst tolerance for the
+	  send_command path.
+
+config ZMK_SPLIT_USB_EVENT_BUFFER_ITEMS
+	int "Number of peripheral events to queue toward the central"
+	default 8
+	help
+	  The peripheral may report several events (key press + sensor +
+	  HID indicator) within a single bulk-IN window — this bounds how
+	  many can be batched before the central reads them out.
+
+config ZMK_SPLIT_USB_TRANSFER_TIMEOUT_MS
+	int "Bulk transfer timeout in milliseconds"
+	default 1000
+	help
+	  Maximum time the central waits for a bulk IN/OUT transfer to
+	  complete before giving up and rescheduling. Should be longer than
+	  the worst-case bus reset + re-enumeration on the wire (50 ms +
+	  enumeration round-trips), shorter than user-perceptible split
+	  latency.
+
+config ZMK_SPLIT_USB_LOG_LEVEL
+	int "USB split transport log level"
+	default 2
+	range 0 4
+
+endif # ZMK_SPLIT_USB

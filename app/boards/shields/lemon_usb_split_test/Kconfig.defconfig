@@ -1,0 +1,29 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if SHIELD_LEMON_USB_SPLIT_TEST_LEFT
+
+config ZMK_KEYBOARD_NAME
+    default "Lemon USB Split"
+
+config ZMK_SPLIT_ROLE_CENTRAL
+    default y
+
+config ZMK_SPLIT_USB
+    default y
+
+endif
+
+if SHIELD_LEMON_USB_SPLIT_TEST_RIGHT
+
+config ZMK_SPLIT_USB
+    default y
+
+endif
+
+if SHIELD_LEMON_USB_SPLIT_TEST_LEFT || SHIELD_LEMON_USB_SPLIT_TEST_RIGHT
+
+config ZMK_SPLIT
+    default y
+
+endif

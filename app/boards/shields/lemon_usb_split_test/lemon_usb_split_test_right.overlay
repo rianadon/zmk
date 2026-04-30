@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2026 The ZMK Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Peripheral side: drive UDC on the Lemon Wired Link USB-C port (GP0).
+ */
+
+#include "lemon_usb_split_test.dtsi"
+
+&uart0 {
+    status = "disabled";
+};
+
+/ {
+    pio_usb_device: pio_usb_device {
+        compatible = "raspberrypi,pio-usb-device";
+        pin-dp = <0>;
+        pinout = "dpdm";
+        data-rate = "full-speed";
+        status = "okay";
+    };
+};

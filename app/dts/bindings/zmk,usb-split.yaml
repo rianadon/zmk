@@ -1,0 +1,19 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: |
+  Top-level node for the USB-based ZMK split transport
+  (CONFIG_ZMK_SPLIT_USB). Identifies the host-side UHC controller the
+  central drives. The peripheral half doesn't reference this binding —
+  it gets its UDC via standard USBD-next class registration.
+
+compatible: "zmk,usb-split"
+
+properties:
+  uhc:
+    type: phandle
+    required: true
+    description: |
+      UHC (USB host controller) phandle on the central side. Typically
+      `&pio_usb_host` (raspberrypi,pio-usb-host). Ignored on peripheral
+      builds.
