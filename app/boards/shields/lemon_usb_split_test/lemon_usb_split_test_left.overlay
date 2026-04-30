@@ -24,4 +24,16 @@
         compatible = "zmk,usb-split";
         uhc = <&pio_usb_host>;
     };
+
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+        zephyr,uart-mcumgr = &cdc_acm_uart0;
+    };
+};
+
+/* Serial console on the native USB-C port via the legacy USBD CDC ACM. */
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
 };

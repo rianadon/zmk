@@ -3,49 +3,26 @@
 
 if ZMK_SPLIT_USB
 
-# Either UHC or UDC must be enabled depending on which side this build
-# targets. We don't force a specific UDC/UHC driver — the consumer's
-# board overlay picks raspberrypi,pio-usb-host or
-# raspberrypi,pio-usb-device.
-config DYNAMIC_INTERRUPTS
-	default y if UDC_PIO_USB
-
+# Central side: drives a UHC controller (Pico-PIO-USB on Link).
 config UHC_PIO_USB
 	default y if ZMK_SPLIT_ROLE_CENTRAL
 
-config UDC_PIO_USB
-	default y if !ZMK_SPLIT_ROLE_CENTRAL
-
-# Subsystems both sides need.
-config NET_BUF
-	default y
-
-# Central uses k_calloc to allocate uhc_transfer descriptors per
-# in-flight transfer; needs a non-zero heap.
-config HEAP_MEM_POOL_SIZE
-	default 4096 if ZMK_SPLIT_ROLE_CENTRAL
-
-# UHC subsystem on central, UDC + USBD-next on peripheral.
 config UHC_DRIVER
 	default y if ZMK_SPLIT_ROLE_CENTRAL
 
-config UDC_DRIVER
-	default y if !ZMK_SPLIT_ROLE_CENTRAL
+# Central uses k_calloc to allocate uhc_transfer descriptors per
+# in-flight transfer + net_bufs for transfer payloads.
+config NET_BUF
+	default y if ZMK_SPLIT_ROLE_CENTRAL
 
-config USB_DEVICE_STACK_NEXT
-	default y if !ZMK_SPLIT_ROLE_CENTRAL
+config HEAP_MEM_POOL_SIZE
+	default 4096 if ZMK_SPLIT_ROLE_CENTRAL
 
-# Legacy USB device stack and USBD-next can't coexist when both
-# instantiate CDC ACM (linker chokes on duplicated DT instance
-# ordinals). The USB split peripheral uses USBD-next exclusively, so
-# force the legacy stack off (and thereby ZMK_USB which would auto-
-# select it) on the peripheral side. The Lemon native USB-C remains
-# unused on the peripheral half — the only link to anything is the
-# Link USB-C running our PIO-USB bulk pair.
-config USB_DEVICE_STACK
-	default n if !ZMK_SPLIT_ROLE_CENTRAL
-
-config ZMK_USB
-	default n if !ZMK_SPLIT_ROLE_CENTRAL
+# Peripheral side: legacy USB device stack on the native USB-C,
+# exposing a CDC ACM serial port that the central enumerates and uses
+# as the bulk transport. Mature, in-tree CDC ACM avoids the
+# udc_pio_usb path entirely on the peripheral. Requires
+# CONFIG_USB_DEVICE_STACK + CONFIG_USB_CDC_ACM and a zephyr,cdc-acm-uart
+# DT node under zephyr_udc0 in the per-shield overlay.
 
 endif # ZMK_SPLIT_USB

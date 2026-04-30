@@ -28,15 +28,18 @@
  * connect.
  */
 
+#include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/usb/uhc.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/net/buf.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/sys/crc.h>
+#include <zephyr/sys/printk.h>
 #include <zephyr/sys/ring_buffer.h>
 #include <zephyr/usb/usb_ch9.h>
-#include <zephyr/drivers/usb/uhc.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(zmk_split_usb_central, CONFIG_ZMK_SPLIT_USB_LOG_LEVEL);
@@ -320,8 +323,10 @@ static void bring_up(void)
 {
 	int ret;
 
-	LOG_INF("Resetting bus");
+	printk("zsuc: bring_up start\n");
+	printk("zsuc: bus reset...\n");
 	ret = uhc_bus_reset(uhc_dev);
+	printk("zsuc: bus reset returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("bus_reset failed: %d", ret);
 		return;
@@ -329,8 +334,9 @@ static void bring_up(void)
 	/* USB §9.2.6.3: at least 10ms after reset before talking. */
 	k_msleep(50);
 
-	LOG_INF("SET_ADDRESS %u", PERIPHERAL_DEV_ADDR);
+	printk("zsuc: SET_ADDRESS %u...\n", PERIPHERAL_DEV_ADDR);
 	ret = set_address(PERIPHERAL_DEV_ADDR);
+	printk("zsuc: SET_ADDRESS returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("SET_ADDRESS failed: %d", ret);
 		return;
@@ -338,15 +344,37 @@ static void bring_up(void)
 	atomic_set(&enumerated, 1);
 	k_msleep(2);
 
-	LOG_INF("SET_CONFIGURATION 1");
+	printk("zsuc: SET_CONFIGURATION 1...\n");
 	ret = set_configuration(1);
+	printk("zsuc: SET_CONFIGURATION returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("SET_CONFIGURATION failed: %d", ret);
 		return;
 	}
 
-	LOG_INF("Arming bulk-IN read");
+	printk("zsuc: arming bulk-IN read\n");
 	(void)arm_bulk_in();
+	printk("zsuc: bring_up done\n");
+}
+
+static void wait_for_console(void)
+{
+#if DT_NODE_EXISTS(DT_CHOSEN(zephyr_console))
+	const struct device *console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+	if (console == NULL || !device_is_ready(console)) {
+		return;
+	}
+	uint32_t dtr = 0;
+	for (int i = 0; i < 30; i++) {
+		printk("zsuc wfc i=%d dtr=%u\n", i, dtr);
+		uart_line_ctrl_get(console, UART_LINE_CTRL_DTR, &dtr);
+		if (dtr) {
+			break;
+		}
+		k_msleep(100);
+	}
+	k_msleep(200);
+#endif
 }
 
 static void central_thread(void *p1, void *p2, void *p3)
@@ -356,24 +384,35 @@ static void central_thread(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p3);
 	int ret;
 
+	wait_for_console();
+	printk("\n*** zmk_split_usb_central thread up ***\n");
+
 	k_sem_init(&connect_sem, 0, 1);
 	k_sem_init(&xfer_done, 0, 1);
 
+	printk("zsuc: device_is_ready check\n");
 	if (!device_is_ready(uhc_dev)) {
+		printk("zsuc: UHC not ready\n");
 		LOG_ERR("UHC %s not ready", uhc_dev->name);
 		return;
 	}
 
+	printk("zsuc: calling uhc_init\n");
 	ret = uhc_init(uhc_dev, uhc_event);
+	printk("zsuc: uhc_init returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("uhc_init failed: %d", ret);
 		return;
 	}
+
+	printk("zsuc: calling uhc_enable\n");
 	ret = uhc_enable(uhc_dev);
+	printk("zsuc: uhc_enable returned %d\n", ret);
 	if (ret) {
 		LOG_ERR("uhc_enable failed: %d", ret);
 		return;
 	}
+	printk("zsuc: USB split central up; waiting for peripheral\n");
 	LOG_INF("USB split central up; waiting for peripheral");
 
 	while (1) {

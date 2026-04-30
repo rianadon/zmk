@@ -2,21 +2,16 @@
  * Copyright (c) 2026 The ZMK Contributors
  * SPDX-License-Identifier: MIT
  *
- * Peripheral side: drive UDC on the Lemon Wired Link USB-C port (GP0).
+ * Peripheral side (native UDC variant): expose a CDC ACM serial port
+ * on the native USB-C via the legacy USB device stack. Lemon A's UHC
+ * (running on its Link USB-C) enumerates this and uses the data-
+ * interface bulk endpoints for the split protocol.
  */
 
 #include "lemon_usb_split_test.dtsi"
 
-&uart0 {
-    status = "disabled";
-};
-
-/ {
-    pio_usb_device: pio_usb_device {
-        compatible = "raspberrypi,pio-usb-device";
-        pin-dp = <0>;
-        pinout = "dpdm";
-        data-rate = "full-speed";
-        status = "okay";
-    };
+&zephyr_udc0 {
+	zsu_cdc_acm: zsu_cdc_acm {
+		compatible = "zephyr,cdc-acm-uart";
+	};
 };

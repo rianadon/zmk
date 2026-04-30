@@ -75,11 +75,16 @@ struct zmk_split_usb_msg_postfix {
 #define ZMK_SPLIT_USB_EVENT_PACKET_SIZE                                                            \
 	(sizeof(struct zmk_split_usb_event_envelope) + sizeof(struct zmk_split_usb_msg_postfix))
 
-/* Endpoint addresses used by both sides — hardcoded so the central
- * doesn't need to enumerate the descriptor before opening them. The
- * peripheral's class descriptor matches these. */
-#define ZMK_SPLIT_USB_BULK_OUT_EP 0x01
-#define ZMK_SPLIT_USB_BULK_IN_EP  0x81
+/* Endpoint addresses the central opens against the peripheral.
+ *
+ * The peripheral exposes itself as a standard USB CDC ACM serial port
+ * via Zephyr's mature legacy USB device stack — no custom vendor
+ * class to maintain. Zephyr's CDC ACM puts the data-interface bulk
+ * endpoints at 0x02 (OUT) and 0x82 (IN) when CDC ACM is the only
+ * class in the build. The central skips descriptor enumeration and
+ * opens these directly. */
+#define ZMK_SPLIT_USB_BULK_OUT_EP 0x02
+#define ZMK_SPLIT_USB_BULK_IN_EP  0x82
 
 /* Vendor / product IDs the central uses to identify the peripheral.
  * The same magic also goes in the device descriptor's bcdDevice field
