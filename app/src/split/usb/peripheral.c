@@ -151,7 +151,7 @@ static void process_rx_work(struct k_work *w)
 		const struct zmk_split_usb_command_envelope *env =
 			(const struct zmk_split_usb_command_envelope *)buf;
 		LOG_DBG("rx command type=%d", env->payload.cmd.type);
-		extern const struct zmk_split_transport_peripheral
+		extern struct zmk_split_transport_peripheral
 			zmk_split_usb_peripheral_inst;
 		zmk_split_transport_peripheral_command_handler(
 			&zmk_split_usb_peripheral_inst, env->payload.cmd);

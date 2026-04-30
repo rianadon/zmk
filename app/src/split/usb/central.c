@@ -200,7 +200,7 @@ static bool envelope_is_valid(const uint8_t *buf, size_t len)
 
 /* ===== Bulk paths ==================================================== */
 
-extern const struct zmk_split_transport_central zmk_split_usb_central_inst;
+extern struct zmk_split_transport_central zmk_split_usb_central_inst;
 
 static int arm_bulk_in(void)
 {
