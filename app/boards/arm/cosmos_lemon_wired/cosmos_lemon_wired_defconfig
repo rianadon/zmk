@@ -25,8 +25,10 @@ CONFIG_NVS=y
 CONFIG_SETTINGS_NVS=y
 CONFIG_BUILD_OUTPUT_UF2=y
 
-# Native USB device — host link.
-CONFIG_USB_DEVICE_STACK=y
-# CONFIG_ZMK_USB belongs in the per-shield/per-app config, not at board level
-# (ZMK_USB is only defined when building inside ZMK's app tree). Set it
-# through the generator's per-side .conf instead.
+# Native USB device available — but the legacy CONFIG_USB_DEVICE_STACK
+# is intentionally NOT enabled here. Apps that need the legacy stack
+# select it via ZMK_USB; apps that need USBD-next set
+# CONFIG_USB_DEVICE_STACK_NEXT=y. The two can't coexist when both
+# instantiate CDC ACM (linker chokes on duplicated DT instance
+# ordinals), so leaving the choice to the per-shield .conf avoids
+# baking it in here.
