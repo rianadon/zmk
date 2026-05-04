@@ -2,7 +2,7 @@ identifier: cosmos_lemon_wired
 name: cosmos lemon wired
 type: mcu
 arch: arm
-flash: 8192
+flash: 16384
 ram: 264
 toolchain:
   - zephyr
