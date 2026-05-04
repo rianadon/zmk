@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MIT
+
+CONFIG_SOC_SERIES_RP2XXX=y
+CONFIG_SOC_RP2040=y
+CONFIG_BOARD_COSMOS_LEMON_WIRED=y
+
+CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=125000000
+
+# Pinctrl + GPIO
+CONFIG_PINCTRL=y
+CONFIG_GPIO=y
+
+# UART for the wired-split link
+CONFIG_SERIAL=y
+CONFIG_UART_INTERRUPT_DRIVEN=y
+
+CONFIG_RESET=y
+
+# Flash + code partition
+CONFIG_FLASH=y
+CONFIG_FLASH_PAGE_LAYOUT=y
+CONFIG_FLASH_MAP=y
+CONFIG_USE_DT_CODE_PARTITION=y
+CONFIG_NVS=y
+CONFIG_SETTINGS_NVS=y
+CONFIG_BUILD_OUTPUT_UF2=y
+
+# Native USB device available — but the legacy CONFIG_USB_DEVICE_STACK
+# is intentionally NOT enabled here. Apps that need the legacy stack
+# select it via ZMK_USB; apps that need USBD-next set
+# CONFIG_USB_DEVICE_STACK_NEXT=y. The two can't coexist when both
+# instantiate CDC ACM (linker chokes on duplicated DT instance
+# ordinals), so leaving the choice to the per-shield .conf avoids
+# baking it in here.

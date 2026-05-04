@@ -1,0 +1,18 @@
+identifier: cosmos_lemon_wired
+name: cosmos lemon wired
+type: mcu
+arch: arm
+flash: 16384
+ram: 264
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - usb_device
+  - gpio
+  - i2c
+  - spi
+  - uart
+  - flash
+  - watchdog

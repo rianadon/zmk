@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2026 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * Cosmos Lemon Wired — RP2040-based dual-USB-C microcontroller.
+ * One USB-C port (native USBD) plugs into the host; the other USB-C port
+ * pair (GP0/GP1, "Link") carries the inter-half UART. See lemon-wired.md
+ * for pinout.
+ */
+
+#include <freq.h>
+#include <rpi_pico/rp2040.dtsi>
+#include <zephyr/dt-bindings/i2c/i2c.h>
+#include "cosmos_lemon_wired-pinctrl.dtsi"
+
+/ {
+    model = "cosmos_lemon_wired";
+    compatible = "cosmos,lemon_wired";
+
+    xtal_clk: xtal-clk {
+        compatible = "fixed-clock";
+        clock-frequency = <12000000>;
+        #clock-cells = <0>;
+    };
+
+    aliases {
+        watchdog0 = &wdt0;
+    };
+};
+
+&flash0 {
+    /* Lemon Wired ships with an 16MB W25Q-series flash. */
+    reg = <0x10000000 DT_SIZE_M(16)>;
+
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        /* Reserved memory for the second-stage bootloader. */
+        second_stage_bootloader: partition@0 {
+            label = "second_stage_bootloader";
+            reg = <0x00000000 0x100>;
+            read-only;
+        };
+
+        code_partition: partition@100 {
+            label = "code-partition";
+            reg = <0x100 (DT_SIZE_M(16) - 0x100)>;
+        };
+    };
+};
+
+&gpio0 {
+    status = "okay";
+};
+
+&timer {
+    status = "okay";
+};
+
+&wdt0 {
+    status = "okay";
+};
+
+zephyr_udc0: &usbd {
+    status = "okay";
+};
+
+&vreg {
+    regulator-always-on;
+    regulator-allowed-modes = <REGULATOR_RPI_PICO_MODE_NORMAL>;
+};
+
+/*
+ * Wired-split UART on the Link-only USB-C port (GP0/GP1). Enabled board-wide
+ * so generator-emitted `wired_split` nodes always have a backing UART. If you
+ * later add a UART transport on a different bus, leave this alone.
+ */
+&uart0 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-names = "default";
+};
+
+/* VIK SPI bus (GP12/14/15, GPIO CS). Enabled by default; idle current is
+ * negligible when no VIK peripherals are configured. */
+&spi1 {
+    status = "okay";
+    clock-frequency = <DT_FREQ_M(4)>;
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-names = "default";
+};
+
+/* VIK I2C bus (GP18/19). */
+&i2c1 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+    pinctrl-0 = <&i2c1_default>;
+    pinctrl-names = "default";
+};

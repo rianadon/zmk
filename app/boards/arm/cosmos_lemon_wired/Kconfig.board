@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MIT
+
+config BOARD_COSMOS_LEMON_WIRED
+    bool "cosmos_lemon_wired"
+    depends on SOC_RP2040
