@@ -1,0 +1,8 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+config SHIELD_LEMON_USB_SPLIT_TEST_LEFT
+    def_bool $(shields_list_contains,lemon_usb_split_test_left)
+
+config SHIELD_LEMON_USB_SPLIT_TEST_RIGHT
+    def_bool $(shields_list_contains,lemon_usb_split_test_right)

@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) 2026 The ZMK Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Central side: PIO-USB UHC on the Lemon Wired Link port (GP0/GP1),
+ * ZMK HID output + serial console on native USB-C.
+ */
+
+#include "cosmos_lemon_wired.dtsi"
+
+&uart0 {
+    status = "disabled";
+};
+
+/ {
+    pio_usb_host: pio_usb_host {
+        compatible = "raspberrypi,pio-usb-host";
+        pin-dp = <0>;
+        pinout = "dpdm";
+        data-rate = "full-speed";
+        status = "okay";
+    };
+
+    usb_split: usb_split {
+        compatible = "zmk,usb-split";
+        uhc = <&pio_usb_host>;
+    };
+
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+        zephyr,uart-mcumgr = &cdc_acm_uart0;
+    };
+};
+
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};

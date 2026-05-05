@@ -1,0 +1,28 @@
+# Copyright (c) 2026 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+if ZMK_SPLIT_USB
+
+# Central side: drives a UHC controller (Pico-PIO-USB on Link).
+config UHC_PIO_USB
+    default y if ZMK_SPLIT_ROLE_CENTRAL
+
+config UHC_DRIVER
+    default y if ZMK_SPLIT_ROLE_CENTRAL
+
+# Central uses k_calloc to allocate uhc_transfer descriptors per
+# in-flight transfer + net_bufs for transfer payloads.
+config NET_BUF
+    default y if ZMK_SPLIT_ROLE_CENTRAL
+
+config HEAP_MEM_POOL_SIZE
+    default 4096 if ZMK_SPLIT_ROLE_CENTRAL
+
+# Peripheral side: legacy USB device stack on the native USB-C,
+# exposing a CDC ACM serial port that the central enumerates and uses
+# as the bulk transport. Mature, in-tree CDC ACM avoids the
+# udc_pio_usb path entirely on the peripheral. Requires
+# CONFIG_USB_DEVICE_STACK + CONFIG_USB_CDC_ACM and a zephyr,cdc-acm-uart
+# DT node under zephyr_udc0 in the per-shield overlay.
+
+endif # ZMK_SPLIT_USB

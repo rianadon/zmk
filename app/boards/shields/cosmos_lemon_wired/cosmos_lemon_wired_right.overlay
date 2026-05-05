@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2026 The ZMK Contributors
+ * SPDX-License-Identifier: MIT
+ *
+ * Peripheral side: CDC ACM bulk pair on native USB-C provides the
+ * split link that the central's PIO-USB UHC enumerates and drives.
+ */
+
+#include "cosmos_lemon_wired.dtsi"
+
+&default_transform {
+    col-offset = <7>;
+};
+
+&zephyr_udc0 {
+    zsu_cdc_acm: zsu_cdc_acm {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
