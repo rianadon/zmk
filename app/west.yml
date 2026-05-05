@@ -53,7 +53,7 @@ manifest:
       # IN STATUS for SET_ADDRESS appears to ACK on the host side but
       # the device misses our ACK (timing-critical, must arrive within
       # 6.5–7.5 bit-times of EOP) and never commits the new address.
-      revision: 675543bcc9baa8170f868ab7ba316d418dbcf41f  # main @ post-0.7.2
+      revision: 675543bcc9baa8170f868ab7ba316d418dbcf41f # main @ post-0.7.2
       path: modules/lib/pico-pio-usb
     # Zephyr glue exposing Pico-PIO-USB as UHC + UDC drivers.
     # Pinned at the cleanup of the B4 working state (single-xfer

@@ -11,7 +11,7 @@
 #include "lemon_usb_split_test.dtsi"
 
 &zephyr_udc0 {
-	zsu_cdc_acm: zsu_cdc_acm {
-		compatible = "zephyr,cdc-acm-uart";
-	};
+    zsu_cdc_acm: zsu_cdc_acm {
+        compatible = "zephyr,cdc-acm-uart";
+    };
 };

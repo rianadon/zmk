@@ -33,36 +33,36 @@
 #define ZMK_SPLIT_USB_ENVELOPE_MAGIC_PREFIX "ZmKw"
 
 struct zmk_split_usb_msg_prefix {
-	uint8_t magic_prefix[sizeof(ZMK_SPLIT_USB_ENVELOPE_MAGIC_PREFIX) - 1];
-	uint8_t payload_size;
+    uint8_t magic_prefix[sizeof(ZMK_SPLIT_USB_ENVELOPE_MAGIC_PREFIX) - 1];
+    uint8_t payload_size;
 } __packed;
 
 struct zmk_split_usb_command_payload {
-	uint8_t source;
-	struct zmk_split_transport_central_command cmd;
+    uint8_t source;
+    struct zmk_split_transport_central_command cmd;
 } __packed;
 
 struct zmk_split_usb_command_envelope {
-	struct zmk_split_usb_msg_prefix prefix;
-	struct zmk_split_usb_command_payload payload;
+    struct zmk_split_usb_msg_prefix prefix;
+    struct zmk_split_usb_command_payload payload;
 } __packed;
 
 struct zmk_split_usb_event_payload {
-	uint8_t source;
-	struct zmk_split_transport_peripheral_event event;
+    uint8_t source;
+    struct zmk_split_transport_peripheral_event event;
 } __packed;
 
 struct zmk_split_usb_event_envelope {
-	struct zmk_split_usb_msg_prefix prefix;
-	struct zmk_split_usb_event_payload payload;
+    struct zmk_split_usb_msg_prefix prefix;
+    struct zmk_split_usb_event_payload payload;
 } __packed;
 
 struct zmk_split_usb_msg_postfix {
-	uint32_t crc;
+    uint32_t crc;
 } __packed;
 
-#define ZMK_SPLIT_USB_MSG_EXTRA_SIZE \
-	(sizeof(struct zmk_split_usb_msg_prefix) + sizeof(struct zmk_split_usb_msg_postfix))
+#define ZMK_SPLIT_USB_MSG_EXTRA_SIZE                                                               \
+    (sizeof(struct zmk_split_usb_msg_prefix) + sizeof(struct zmk_split_usb_msg_postfix))
 
 /* Buffer sizing — both sides use the same envelopes so transmit and
  * receive paths are symmetric. Bulk transfers are sized to fit one
@@ -71,9 +71,9 @@ struct zmk_split_usb_msg_postfix {
  * central to read; the central queues up to
  * ZMK_SPLIT_USB_CMD_BUFFER_ITEMS commands. */
 #define ZMK_SPLIT_USB_CMD_PACKET_SIZE                                                              \
-	(sizeof(struct zmk_split_usb_command_envelope) + sizeof(struct zmk_split_usb_msg_postfix))
+    (sizeof(struct zmk_split_usb_command_envelope) + sizeof(struct zmk_split_usb_msg_postfix))
 #define ZMK_SPLIT_USB_EVENT_PACKET_SIZE                                                            \
-	(sizeof(struct zmk_split_usb_event_envelope) + sizeof(struct zmk_split_usb_msg_postfix))
+    (sizeof(struct zmk_split_usb_event_envelope) + sizeof(struct zmk_split_usb_msg_postfix))
 
 /* Endpoint addresses the central opens against the peripheral.
  *
@@ -84,7 +84,7 @@ struct zmk_split_usb_msg_postfix {
  * class in the build. The central skips descriptor enumeration and
  * opens these directly. */
 #define ZMK_SPLIT_USB_BULK_OUT_EP 0x02
-#define ZMK_SPLIT_USB_BULK_IN_EP  0x82
+#define ZMK_SPLIT_USB_BULK_IN_EP 0x82
 
 /* Vendor / product IDs the central uses to identify the peripheral.
  * The same magic also goes in the device descriptor's bcdDevice field
