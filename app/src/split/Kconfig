@@ -24,6 +24,19 @@ config ZMK_SPLIT_WIRED
     select RING_BUFFER
     select CRC
 
+config ZMK_SPLIT_USB
+    bool "USB Split (Pico-PIO-USB on RP2040)"
+    depends on SOC_RP2040
+    select RING_BUFFER
+    select CRC
+    help
+      Carry split keymap commands + events over a USB bulk pair on a
+      Pico-PIO-USB interface. Central side selects UHC_PIO_USB; the
+      peripheral half selects UDC_PIO_USB. The two halves communicate
+      over a USB-C cable between their PIO-USB ports (e.g. the Lemon
+      Wired's "Link" USB-C port pair). Phase 2 of the Lemon Wired ZMK
+      roadmap.
+
 config ZMK_SPLIT_PERIPHERAL_HID_INDICATORS
     bool "Peripheral HID Indicators"
     depends on ZMK_HID_INDICATORS
@@ -34,3 +47,4 @@ endif # ZMK_SPLIT
 
 rsource "bluetooth/Kconfig"
 rsource "wired/Kconfig"
+rsource "usb/Kconfig"

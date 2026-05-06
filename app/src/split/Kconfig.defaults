@@ -3,4 +3,5 @@
 
 rsource "bluetooth/Kconfig.defaults"
 rsource "wired/Kconfig.defaults"
+rsource "usb/Kconfig.defaults"
 
